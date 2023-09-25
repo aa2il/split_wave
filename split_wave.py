@@ -14,8 +14,9 @@ import os
 import wave
 import sys
 import argparse
-import datetime
+from datetime import datetime,timedelta
 from fileio import parse_file_name
+import numpy as np
 
 #######################################################################################
 
@@ -30,9 +31,23 @@ arg_proc = argparse.ArgumentParser()
 arg_proc.add_argument('File', metavar='File',nargs='+',
                       type=str, default='',
                       help='Input Wave File')
+arg_proc.add_argument("-snip", help='Extract a snippet',
+                      type=str,default=None,nargs='*')
+
 args = arg_proc.parse_args()
 fnames=args.File
+
+t = np.array(args.snip)
+#if np.isscalar(t):
+#    t = np.array( [t-1, t+1] )            # +/- 1 min around given time
+#if len(t)==1:
+#    t = np.array( [t[0]-1, t[0]+1] )            # +/- 1 min around given time
+
 print('fnames=',fnames)
+print('t=',t)
+#sys.exit(0)
+
+#######################################################################################
 
 # Loop through list of input files
 for f in fnames:
@@ -60,19 +75,65 @@ for f in fnames:
     print('a=',a)
     print('b=',b)
 
-    start_time = datetime.datetime.strptime( a[1]+' '+b[0], "%Y%m%d %H%M%S")
+    start_time = datetime.strptime( a[1]+' '+b[0], "%Y%m%d %H%M%S")
     print('start_time=',start_time)
 
     # Open the input wave file
     wf = wave.open(fname2, 'rb')
     fs=wf.getframerate()
     width=wf.getsampwidth()
-    channels=wf.getnchannels()
+    nchan=wf.getnchannels()
 
     print('fs=',fs)
+    print('width=',width)
+    print('nchan=',nchan)
     dt=CHUNK/fs
     print('dt=',dt)
 
+    # Extract a snippet
+    if args.snip:
+        print('SNIP SNIP',t,len(t),len(t[0]))
+        #if len(t[0])==4:
+        #    print(t[0])
+        #    tt=t[0]+'00'
+        #    print(tt)
+        #    t[0]=str(tt)
+        #    print(t)
+
+        t1 = datetime.strptime( a[1]+' '+t[0], "%Y%m%d %H%M%S")
+        if len(t)==1:
+            dt = timedelta(seconds=60)
+            t2 = t1 + dt
+            t1 = t1 - dt
+        else:
+            if len(t[1])==4:
+                t[1]=t[1]+'00'
+            t2 = datetime.strptime( a[1]+' '+t[1], "%Y%m%d %H%M%S")
+        start = (t1-start_time).total_seconds()
+        end   = (t2-start_time).total_seconds()
+        print('t1=',t1,t1>=start_time,start)
+        print('t2=',t2,end)
+
+        fname_out = t1.strftime("SNIPPIT_%Y%m%d_%H%M%S.wav")
+        fname_out = "SNIPPIT.wav"
+        print('fname_out=',fname_out)
+        
+        #sys.exit(0)
+
+        # set position in wave to start of segment & extract data
+        wf.setpos(int(start * fs))
+        data = wf.readframes(int((end - start) * fs))
+
+        wf2 = wave.open(fname_out, 'wb')
+        wf2.setnchannels(nchan)
+        wf2.setsampwidth(width)
+        wf2.setframerate(fs)
+        wf2.setnframes(int(len(data) / width))
+        wf2.writeframes(data)
+        wf2.close()
+
+        continue
+    
     # Read data
     data = wf.readframes(CHUNK)
     t=start_time
@@ -93,13 +154,13 @@ for f in fnames:
 
             # ... and open a new one
             wf2 = wave.open(fname_out, 'wb')
-            wf2.setnchannels(channels)
+            wf2.setnchannels(nchan)
             wf2.setsampwidth(width)
             wf2.setframerate(fs)
 
         # Copy this chunk
         wf2.writeframes(data)
-        t += datetime.timedelta(seconds=dt)
+        t += timedelta(seconds=dt)
 
         # Read next chunk
         data = wf.readframes(CHUNK)

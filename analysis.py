@@ -98,8 +98,8 @@ if True:
 
     if True:
         Nwin = int(Ndit)
-        Nfft = 2**math.ceil(math.log(Nwin,2))
-        Nhop = int(Nwin/2)
+        Nfft = 2*2**math.ceil(math.log(Nwin,2))
+        Nhop = int(Nwin/4)
         print(Nwin,Nfft,Nhop)
         #sys.exit(0)
     else:
@@ -117,9 +117,9 @@ if True:
     plt.figure(figsize=(12, 4))
     ax = plt.axes()
     plt.set_cmap('hot')
-    librosa.display.specshow(librosa.amplitude_to_db(out, ref=np.max, top_db=50),
-                             y_axis='mel', x_axis='time',sr=fs)
-    #y_axis='log', x_axis='time',sr=fs)
+    librosa.display.specshow(librosa.amplitude_to_db(out, ref=np.max, top_db=30),
+                             y_axis='hz', x_axis='time',sr=fs)
+    #y_axis='mel', x_axis='time',sr=fs)
     #plt.savefig('spectrogramA.png', bbox_inches='tight', transparent=True, pad_inches=0.0 )
     plt.colorbar()
     plt.show()
