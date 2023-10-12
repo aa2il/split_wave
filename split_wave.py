@@ -43,7 +43,7 @@ t = np.array(args.snip)
 #if len(t)==1:
 #    t = np.array( [t[0]-1, t[0]+1] )            # +/- 1 min around given time
 
-print('fnames=',fnames)
+print('\nfnames=',fnames)
 print('t=',t)
 #sys.exit(0)
 
@@ -93,24 +93,32 @@ for f in fnames:
     # Extract a snippet
     if args.snip:
         print('SNIP SNIP',t,len(t),len(t[0]))
-        #if len(t[0])==4:
-        #    print(t[0])
-        #    tt=t[0]+'00'
-        #    print(tt)
-        #    t[0]=str(tt)
-        #    print(t)
-
+        
+        if len(t[0])==4:
+            if len(t)==1:
+                t=[t[0]+'00']
+            else:
+                t=[t[0]+'00',t[1]]
         t1 = datetime.strptime( a[1]+' '+t[0], "%Y%m%d %H%M%S")
+        
         if len(t)==1:
             dt = timedelta(seconds=60)
             t2 = t1 + dt
             t1 = t1 - dt
         else:
             if len(t[1])==4:
-                t[1]=t[1]+'00'
+                t=[t[0],t[1]+'00']
             t2 = datetime.strptime( a[1]+' '+t[1], "%Y%m%d %H%M%S")
+
+        # Check for date roll-over - kudged for now
+        if t1<start_time:
+            print('WARNING - Likely date roll-over - kludged!!!!!!!!!')
+            t1 += timedelta(hours=24)
+            t2 += timedelta(hours=24)
+            
         start = (t1-start_time).total_seconds()
         end   = (t2-start_time).total_seconds()
+
         print('t1=',t1,t1>=start_time,start)
         print('t2=',t2,end)
 
@@ -121,6 +129,7 @@ for f in fnames:
         #sys.exit(0)
 
         # set position in wave to start of segment & extract data
+        
         wf.setpos(int(start * fs))
         data = wf.readframes(int((end - start) * fs))
 
