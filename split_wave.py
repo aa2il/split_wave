@@ -8,6 +8,9 @@
 #
 # sudo ext4magic /dev/sdb2 -r -f /home/joea/Python/sound/split_wave.py -d /data2/data/junk
 #
+# Notes:
+#           pip3 install pydub
+#
 #######################################################################################
 
 import os
@@ -17,6 +20,7 @@ import argparse
 from datetime import datetime,timedelta
 from fileio import parse_file_name
 import numpy as np
+import librosa
 
 #######################################################################################
 
@@ -59,7 +63,8 @@ for f in fnames:
         print("Split a wave file into hour long segments.\n\nUsage: %s -i filename.wav" % sys.argv[0])
         sys.exit(-1)
 
-    elif ext=='.mp3':
+    elif ext=='.mp3' and False:
+        
         print('\nNeed to convert to wave file first:')
         cmd='mpg123 -v -w '+n+'.wav '+n+'.mp3'
         print('\n'+cmd+'\n')
@@ -70,7 +75,8 @@ for f in fnames:
     # Find time stamp
     a=fname_in.split('_')
     b=a[2].split('.')
-    fname2=p+n+'.wav'
+    ext=b[1]
+    fname2=p+n+'.'+ext
     print('fname2=',fname2)
     print('a=',a)
     print('b=',b)
@@ -78,17 +84,18 @@ for f in fnames:
     start_time = datetime.strptime( a[1]+' '+b[0], "%Y%m%d %H%M%S")
     print('start_time=',start_time)
 
-    # Open the input wave file
-    wf = wave.open(fname2, 'rb')
-    fs=wf.getframerate()
-    width=wf.getsampwidth()
-    nchan=wf.getnchannels()
+    # Open the input file
+    if ext=='wav':
+        wf = wave.open(fname2, 'rb')
+        fs=wf.getframerate()
+        width=wf.getsampwidth()
+        nchan=wf.getnchannels()
 
-    print('fs=',fs)
-    print('width=',width)
-    print('nchan=',nchan)
-    dt=CHUNK/fs
-    print('dt=',dt)
+        print('fs=',fs)
+        print('width=',width)
+        print('nchan=',nchan)
+        dt=CHUNK/fs
+        print('dt=',dt)
 
     # Extract a snippet
     if args.snip:
@@ -128,11 +135,52 @@ for f in fnames:
         
         #sys.exit(0)
 
-        # set position in wave to start of segment & extract data
         
-        wf.setpos(int(start * fs))
-        data = wf.readframes(int((end - start) * fs))
+        if ext=='wav':
+            
+            # set position in wave to start of segment & extract data
+            wf.setpos(int(start * fs))
+            data = wf.readframes(int((end - start) * fs))
+            print(type(data),len(data))
+            
+        elif ext=='mp3':
 
+            data, fs = librosa.load(fname2,offset=start,duration=(end-start))
+            print('fs=',fs)
+            print(type(data),np.shape(data))
+            width=2
+            nchan=2
+
+            data=(32767*data).astype(np.int16)
+            print(data[:10])
+            print(data[:10].tobytes())
+            
+            #sys.exit(0)
+
+            """
+            # This seem really slow!
+            from pydub import AudioSegment
+            #from pydub.utils import get_array_type
+            
+            data = AudioSegment.from_file(file=fname2)
+            print(type(data),np.shape(data))
+            print(data[:10])
+            sys.exit(0)
+            """
+            
+        else:
+    
+            print('HELP!')
+            sys.exit(0)
+
+        # Write out data
+
+        """ 
+        # Try this sometime
+        import wavio
+        wavio.write("myfile.wav", my_np_array, fs, sampwidth=2)
+        """
+        
         wf2 = wave.open(fname_out, 'wb')
         wf2.setnchannels(nchan)
         wf2.setsampwidth(width)
@@ -141,8 +189,11 @@ for f in fnames:
         wf2.writeframes(data)
         wf2.close()
 
+        # Skip over next section which was the original code to break-up a large file
         continue
-    
+
+    # This next section was the original code to break-up a large file into smaller (1hr) chunks.
+    # It should still work but might need to add .mp3 code as well.
     # Read data
     data = wf.readframes(CHUNK)
     t=start_time
