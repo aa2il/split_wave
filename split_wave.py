@@ -63,7 +63,7 @@ for f in fnames:
         print("Split a wave file into hour long segments.\n\nUsage: %s -i filename.wav" % sys.argv[0])
         sys.exit(-1)
 
-    elif ext=='.mp3' and False:
+    elif ext=='.mp3' and True:           # Until we get mp support working properly
         
         print('\nNeed to convert to wave file first:')
         cmd='mpg123 -v -w '+n+'.wav '+n+'.mp3'
@@ -76,6 +76,7 @@ for f in fnames:
     a=fname_in.split('_')
     b=a[2].split('.')
     ext=b[1]
+    ext='wav'                  # Until we get mp3 working properly
     fname2=p+n+'.'+ext
     print('fname2=',fname2)
     print('a=',a)
@@ -145,15 +146,24 @@ for f in fnames:
             
         elif ext=='mp3':
 
-            data, fs = librosa.load(fname2,offset=start,duration=(end-start))
+            data, fs = librosa.load(fname2,offset=start,duration=(end-start),sr=None)
             print('fs=',fs)
-            print(type(data),np.shape(data))
+            print(type(data),np.shape(data),type(data[0]))
             width=2
             nchan=2
 
-            data=(32767*data).astype(np.int16)
-            print(data[:10])
-            print(data[:10].tobytes())
+            if True:
+                import matplotlib.pyplot as plt
+                fig, ax = plt.subplots()
+                ax.plot(data[0::2])
+                plt.show()
+                #data=np.array(data)
+                #print(type(data),np.shape(data),type(data[0,0]))
+                sys.exit(0)
+            else:
+                data=(32767*data).astype(np.int16)
+                print(data[:10])
+                print(data[:10].tobytes())
             
             #sys.exit(0)
 
@@ -175,19 +185,18 @@ for f in fnames:
 
         # Write out data
 
-        """ 
-        # Try this sometime
-        import wavio
-        wavio.write("myfile.wav", my_np_array, fs, sampwidth=2)
-        """
-        
-        wf2 = wave.open(fname_out, 'wb')
-        wf2.setnchannels(nchan)
-        wf2.setsampwidth(width)
-        wf2.setframerate(fs)
-        wf2.setnframes(int(len(data) / width))
-        wf2.writeframes(data)
-        wf2.close()
+        if False:
+            import wavio
+            wavio.write(fname_out, data, fs, sampwidth=2)
+        else:        
+            wf2 = wave.open(fname_out, 'wb')
+            wf2.setnchannels(nchan)
+            wf2.setsampwidth(width)
+            wf2.setframerate(fs)
+            wf2.setnframes(int(len(data) / width))
+            #wf2.writeframes(data.tobytes())
+            wf2.writeframes(data)
+            wf2.close()
 
         # Skip over next section which was the original code to break-up a large file
         continue
