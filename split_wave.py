@@ -1,5 +1,8 @@
 #! /usr/bin/python3
-#######################################################################################
+################################################################################
+#
+# split_wave.py - Rev 1.0
+# Copyright (C) 2021-4 by Joseph B. Attili, aa2il AT arrl DOT net
 #
 # Program to split up a capture wave file
 #
@@ -11,7 +14,19 @@
 # Notes:
 #           pip3 install pydub
 #
-#######################################################################################
+################################################################################
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+################################################################################
 
 import os
 import wave
@@ -22,11 +37,11 @@ from fileio import parse_file_name
 import numpy as np
 import librosa
 
-#######################################################################################
+################################################################################
 
 CHUNK = 1024
 
-#######################################################################################
+################################################################################
 
 # Get command line args
 arg_proc = argparse.ArgumentParser()
@@ -51,7 +66,7 @@ print('\nfnames=',fnames)
 print('t=',t)
 #sys.exit(0)
 
-#######################################################################################
+################################################################################
 
 # Loop through list of input files
 for f in fnames:
