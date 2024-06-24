@@ -36,6 +36,7 @@ from datetime import datetime,timedelta
 from fileio import parse_file_name
 import numpy as np
 import librosa
+from utilities import error_trap
 
 ################################################################################
 
@@ -154,8 +155,13 @@ for f in fnames:
         
         if ext=='wav':
             
-            # set position in wave to start of segment & extract data
-            wf.setpos(int(start * fs))
+            # Set position in wave to start of segment & extract data
+            try:
+                wf.setpos(int(start * fs))
+            except: 
+                error_trap('SPLIT WAVE: Unable to set file position')
+                continue
+                
             data = wf.readframes(int((end - start) * fs))
             print(type(data),len(data))
             
@@ -213,6 +219,9 @@ for f in fnames:
             wf2.writeframes(data)
             wf2.close()
 
+            if args.snip:
+                break
+            
         # Skip over next section which was the original code to break-up a large file
         continue
 
