@@ -48,7 +48,7 @@ CHUNK = 1024
 arg_proc = argparse.ArgumentParser()
 
 # Unflagged arg with input file name(s)
-arg_proc.add_argument('File', metavar='File',nargs='+',
+arg_proc.add_argument('File', metavar='File',nargs='*',
                       type=str, default='',
                       help='Input Wave File')
 arg_proc.add_argument("-snip", help='Extract a snippet',
@@ -56,6 +56,8 @@ arg_proc.add_argument("-snip", help='Extract a snippet',
 
 args = arg_proc.parse_args()
 fnames=args.File
+if len(fnames)==0:
+    fnames=['capture_*.wav']
 
 t = np.array(args.snip)
 #if np.isscalar(t):
