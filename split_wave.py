@@ -105,7 +105,11 @@ for f in fnames:
 
     # Open the input file
     if ext=='wav':
-        wf = wave.open(fname2, 'rb')
+        try:
+            wf = wave.open(fname2, 'rb')
+        except:
+            error_trap('SPLIT WAVE: Unable to open '+fname2)
+            continue
         fs=wf.getframerate()
         width=wf.getsampwidth()
         nchan=wf.getnchannels()
