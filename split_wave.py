@@ -5,7 +5,7 @@
 ################################################################################
 #
 # split_wave.py - Rev 1.0
-# Copyright (C) 2021-4 by Joseph B. Attili, aa2il AT arrl DOT net
+# Copyright (C) 2021-5 by Joseph B. Attili, joe DOT aa2il AT gmail DOT com
 #
 # Program to split up a capture wave file
 #
@@ -54,32 +54,37 @@ arg_proc = argparse.ArgumentParser()
 arg_proc.add_argument('File', metavar='File',nargs='*',
                       type=str, default='',
                       help='Input Wave File')
-arg_proc.add_argument("-snip", help='Extract a snippet',
+arg_proc.add_argument("-snip", help='Extract a snippet, time or time interval',
                       type=str,default=None,nargs='*')
+arg_proc.add_argument("-date", help='Date fopr snippet',
+                      type=str,default=None)
 
 args = arg_proc.parse_args()
 fnames=args.File
 if len(fnames)==0:
     fnames=['capture_*.wav']
 
-t = np.array(args.snip)
+DATE = args.date
+TIME = np.array(args.snip)
 #if np.isscalar(t):
 #    t = np.array( [t-1, t+1] )            # +/- 1 min around given time
 #if len(t)==1:
 #    t = np.array( [t[0]-1, t[0]+1] )            # +/- 1 min around given time
 
 print('\nfnames=',fnames)
-print('t=',t)
+print('TIME=',TIME)
+print('DATE=',DATE)
 #sys.exit(0)
 
 ################################################################################
 
 # Loop through list of input files
+success=False
 for f in fnames:
     fname_in = os.path.expanduser(f)
     p,n,ext  = parse_file_name(fname_in)
 
-    print('fname_in=',fname_in,'\np=',p,'\tn=',n,'ext=',ext)
+    print('\nfname_in=',fname_in,'\np=',p,'\tn=',n,'ext=',ext)
     if not fname_in:
         print("Split a wave file into hour long segments.\n\nUsage: %s -i filename.wav" % sys.argv[0])
         sys.exit(-1)
@@ -120,19 +125,34 @@ for f in fnames:
         print('fs=',fs)
         print('width=',width)
         print('nchan=',nchan)
+        nframes=wf.getnframes()
         dt=CHUNK/fs
-        print('dt=',dt)
+        print('CHUNK=',CHUNK,'\tdt=',dt)
+        dt2=nframes/fs
+        print('nframes=',nframes,'\tdt2=',dt2,'sec =',dt2/60.,'min = ',dt2/3600.,'hrs')
+        
+        end_time = start_time + timedelta(seconds=dt2)
+        print('end_time=',end_time)
+        #sys.exit(0)
 
     # Extract a snippet
     if args.snip:
-        print('SNIP SNIP',t,len(t),len(t[0]))
+        t=TIME
+        print('SNIP SNIP t=',t,'\tlen=',len(t),len(t[0]))
         
         if len(t[0])==4:
             if len(t)==1:
                 t=[t[0]+'00']
             else:
                 t=[t[0]+'00',t[1]]
-        t1 = datetime.strptime( a[1]+' '+t[0], "%Y%m%d %H%M%S")
+
+        if DATE==None:
+            DATE=a[1]
+        elif len(DATE)<8:
+            DATE=a[1][:8-len(DATE)]+DATE
+        print('DATE=',DATE)
+                
+        t1 = datetime.strptime( DATE+' '+t[0], "%Y%m%d %H%M%S")
         
         if len(t)==1:
             dt = timedelta(seconds=60)
@@ -143,7 +163,15 @@ for f in fnames:
                 t=[t[0],t[1]+'00']
             t2 = datetime.strptime( a[1]+' '+t[1], "%Y%m%d %H%M%S")
 
-        # Check for date roll-over - kudged for now
+        # Check if this interval is in this file
+        if t2<start_time or t1>end_time:
+            print('Time interval not in this file!')
+            print('\tt1=',t1)
+            print('\tt2=',t2)
+            continue
+            #sys.exit(0)
+
+        # Check for date roll-over - kudged for now - Probably don't get here anymore!
         if t1<start_time:
             print('WARNING - Likely date roll-over - kludged!!!!!!!!!')
             t1 += timedelta(hours=24)
@@ -172,7 +200,7 @@ for f in fnames:
                 continue
                 
             data = wf.readframes(int((end - start) * fs))
-            print(type(data),len(data))
+            print('data=',type(data),len(data))
             
         elif ext=='mp3':
 
