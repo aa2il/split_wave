@@ -147,12 +147,12 @@ for f in fnames:
                 t=[t[0]+'00',t[1]]
 
         if DATE==None:
-            DATE=a[1]
+            DATE2=a[1]
         elif len(DATE)<8:
-            DATE=a[1][:8-len(DATE)]+DATE
-        print('DATE=',DATE)
+            DATE2=a[1][:8-len(DATE)]+DATE
+        print('DATE2=',DATE2)
                 
-        t1 = datetime.strptime( DATE+' '+t[0], "%Y%m%d %H%M%S")
+        t1 = datetime.strptime( DATE2+' '+t[0], "%Y%m%d %H%M%S")
         
         if len(t)==1:
             dt = timedelta(seconds=60)
