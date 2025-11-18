@@ -168,14 +168,23 @@ for f in fnames:
             print('Time interval not in this file!')
             print('\tt1=',t1)
             print('\tt2=',t2)
-            continue
+
+            # Check for a roll-over
+            t1 += timedelta(hours=24)
+            t2 += timedelta(hours=24)
+            print('Lets try Rover Roll-over ...')
+            print('\tt1=',t1)
+            print('\tt2=',t2)
+            if t2<start_time or t1>end_time:
+                print('Neither is roll-over')
+                continue
             #sys.exit(0)
 
         # Check for date roll-over - kudged for now - Probably don't get here anymore!
-        if t1<start_time:
-            print('WARNING - Likely date roll-over - kludged!!!!!!!!!')
-            t1 += timedelta(hours=24)
-            t2 += timedelta(hours=24)
+        #if t1<start_time:
+        #    print('WARNING - Likely date roll-over - kludged!!!!!!!!!')
+        #    t1 += timedelta(hours=24)
+        #    t2 += timedelta(hours=24)
             
         start = (t1-start_time).total_seconds()
         end   = (t2-start_time).total_seconds()
